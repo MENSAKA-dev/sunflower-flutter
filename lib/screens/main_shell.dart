@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../services/auth_service.dart';
 import 'dashboard_screen.dart';
 import 'products_screen.dart';
 import 'sales_screen.dart';
 import 'customers_screen.dart';
+import 'login_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -52,6 +54,33 @@ class _MainShellState extends State<MainShell> {
     CustomersScreen(),
   ];
 
+  Future<void> _logout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Cerrar sesión'),
+        content: const Text('¿Estás seguro de que quieres salir?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4F46E5)),
+            child: const Text('Salir', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await AuthService.logout();
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (_) => false,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.of(context).size.width >= 800;
@@ -77,6 +106,14 @@ class _MainShellState extends State<MainShell> {
                           letterSpacing: 1.2)),
                 ]),
               ),
+              trailing: Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: IconButton(
+                  icon: const Icon(Icons.logout),
+                  tooltip: 'Cerrar sesión',
+                  onPressed: _logout,
+                ),
+              ),
               destinations: _destinations,
             ),
             const VerticalDivider(thickness: 1, width: 1),
@@ -87,6 +124,12 @@ class _MainShellState extends State<MainShell> {
     }
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('SUNFLOWER ERP'),
+        actions: [
+          IconButton(icon: const Icon(Icons.logout), tooltip: 'Cerrar sesión', onPressed: _logout),
+        ],
+      ),
       body: _screens[_idx],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _idx,
